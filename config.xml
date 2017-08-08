@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <description>This is a template of xcat Jenkins project</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>c910f02c09p28-ppc64</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H 5 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+set -x
+
+#---------To spcify OS wanted to run whole test based on---------
+
+#[naming rule]:
+#The os name should be consistent with the os name which xcat copycds generated.
+#Take redhat7.3 for example,the osimage name is rhels7.3-ppc64le-install-compute,
+#the value of XCAT_TEST_OS should be rhels7.3
+export XCAT_TEST_OS=rhels6.9
+
+
+#---------To spcify target xcat build---------
+
+#If need to test your own build.
+#comment &quot;XCAT_TEST_BRANCH&quot; line out,move &quot;#&quot; out of below &quot;XCAT_TEST_CORE&quot; line and set corect value
+#if need to test the latest daily build in build server,
+#comment &quot;XCAT_TEST_CORE&quot; line out,move &quot;#&quot; out of below &quot;XCAT_TEST_BRANCH&quot; line and set corect value
+#for example : master or 2.13
+
+export XCAT_TEST_CORE=http://10.4.31.1/install/core/xcat/build/xcat2_autobuild_daily_builds/20170621.1025/linux_rpm/ZVM_XCAT_DEV/core-rpms-snap.tar.bz2
+#export XCAT_TEST_BRANCH=master
+
+#---------To spcify target xcat dependency package---------
+
+#If not set, will use the latest dependency package in xcat.org
+#export XCAT_TEST_DEP=http://10.2.1.9/install/httpserver/xcat-dep-201702211334.tar.bz2
+
+#---------To spcify automation framework code repo---------
+
+#For automation development environment, using below 2 line  [RECOMMEND]
+export XCAT_TEST_GIT_REPO=git@github.ibm.com:gongjie/jenkins.git
+export XCAT_TEST_GIT_BRANCH=devel
+
+#For automation product environment, using below 2 line  [NOT RECOMMEND]
+#export XCAT_TEST_GIT_REPO=git@github.ibm.com:xcat2/jenkins.git
+#export XCAT_TEST_GIT_BRANCH=master
+
+
+#---------To specify mailing list ---------
+#using comma to separate different people
+#export XCAT_TEST_MAILING_LIST=huweihua@cn.ibm.com,yangsbj@cn.ibm.com
+export XCAT_TEST_MAILING_LIST=huweihua@cn.ibm.com
+
+#---------To specify test case list ---------
+
+#If need to customize you own case list,
+#paste you case in bundle array
+#declare -a bundle=(
+#lsdef_a
+#lsdef_t_o_l
+#lsdef_t_o_l_z
+#INCLUDE:MN_basic.bundle
+#lsdef_t
+#lsdef_t_i_o
+#)
+#export XCAT_TEST_CASE=&quot;${bundle[*]}&quot;
+
+#If in automation product environment, comment all lines in this section out
+
+#---------To specify the database type----------
+
+#Using Mysql by default
+#export XCAT_TEST_DATABASE=PostgreSQL
+
+#---------To specify the additional plugin----------
+
+#using this attribute to specify some customize script which&apos;s result will be inserted into normal mail report
+#The plugin script should be check in Jenkins repo &quot;~/jenkins/plugin&quot; ahead.
+export XCAT_TEST_PLUGIN=get_p9euhn01_bmc_firmware_version
+
+#----------------DO NOT MODIFY BELOW LINES-------------
+
+cp /tmp/ok/test.sh .
+./test.sh</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
