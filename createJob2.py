@@ -59,17 +59,27 @@ def getDicFromConf(path):
 				str=conf_arr[end+1]
 				kv_arr = str.split('=')
 				str1=kv_arr[0]
-				conf_dic[str1]=kv_arr[1]
+				str2=kv_arr[1]
+				str1=str1.strip()
+				str2=str2.strip()
+				conf_dic[str1]=str2
 			else:
 				str = conf_arr[k]
 				kv_arr = str.split('=')
 				str1=kv_arr[0]
-				conf_dic[str1]=kv_arr[1]
+				str2=kv_arr[1]
+				str1=str1.strip()
+				str2=str2.strip()
+				conf_dic[str1]=str2
 	else: 
 		for k in range(0,new_len):
 			str = bundle_arr[k]
 			kv_arr = str.split('=')
-			conf_dic[kv_arr[0]]=kv_arr[1]
+			str1=kv_arr[0]
+			str2=kv_arr[1]
+			str1=str1.strip()
+			str2=str2.strip()
+			conf_dic[str1]=str2
 	print('conf_dic:',conf_dic,'\n','conf_dic_len:',len(conf_dic),'\n')
 	return conf_dic
 
@@ -89,6 +99,11 @@ if 'project_name' in conf_dic.keys():
 else:
 	print('Please set project_name in jenkins_project.conf.\n')
 
+if 'group_name' in conf_dic.keys():
+	test_view_name = conf_dic['group_name']
+else:
+	print('Please set group_name in jenkins_project.conf.\n')
+
 if 'test_cluster' in conf_dic.keys():
 	assignedNode = conf_dic['test_cluster']
 else:
@@ -103,6 +118,7 @@ else:
 if 'os' in conf_dic.keys():
 	XCAT_TEST_OS = conf_dic['os']
 else:
+	#raise Exception("Please set os in jenkins_project.conf.\n!")
 	print('Please set os in jenkins_project.conf.\n')
 
 '''
@@ -113,6 +129,7 @@ else:
 '''
 XCAT_TEST_BRANCH_OR_CORE = ''
 if ('branch' in conf_dic.keys() and 'customize_xcat_core' in conf_dic.keys()):
+	#raise Exception("Branch and XCAT_TEST_CORE are conflicting.Please reset the configuration file.\n")
 	print('Branch and XCAT_TEST_CORE are conflicting.Please reset the configuration file.\n')	
 elif 'branch' in conf_dic.keys():
 	branch_str = conf_dic['branch']
@@ -136,8 +153,8 @@ if 'automation_env' in conf_dic.keys():
 	env = conf_dic['automation_env']
 	if env == 'development':
 		AUTOMATION_ENV = development
-		jenkins_url = 'http://127.0.0.1:8080' #'http://10.2.4.25:8080'
-		jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080") #Jenkins(jenkins_url,username="admin",password="cluster")
+		jenkins_url = 'http://10.2.4.25:8080' #'http://127.0.0.1:8080' #'http://10.2.4.25:8080'
+		jenkins =  Jenkins(jenkins_url,username="admin",password="cluster") #Jenkins(jenkins_url,username="admin",password="cluster")
 	elif env == 'production':
 		AUTOMATION_ENV = product
 		jenkins_url = 'http://10.4.32.1:8080'
@@ -192,7 +209,7 @@ timerTrigger_text = pass
 command_text = pass
 '''
 
-template_job_name ="test8"#"ds_project_template"
+template_job_name = "ds_project_template"#"test8"#"ds_project_template"
 config_name = "config.xml"
 config = jenkins[template_job_name].get_config()
 f = open(config_name,'w')
@@ -228,7 +245,7 @@ tree.write(config_output_name,xml_declaration=True, encoding='utf-8', method="xm
 xml = open(config_output_name).read()
 
 
-print(xml)
+#print(xml)
 
 
 if job_name in jenkins.jobs:
@@ -236,7 +253,9 @@ if job_name in jenkins.jobs:
 else:
    job = jenkins.create_job(jobname=job_name, xml=xml);
 
-
+###build a job,params is optional
+#params = {'VERSION': '1.2.3', 'PYTHON_VER': '2.7'}
+#jenkins.build_job(job_name,params)
 
 
 # Get job from Jenkins by job name
@@ -252,7 +271,7 @@ print(my_job)
 
 # Create ListView in main view
 logger.info('Attempting to create new view')
-test_view_name = 'ds_group2'#SimpleListView1
+#test_view_name = 'ds_group2'#SimpleListView1
 my_view = jenkins.views.create(test_view_name)
 my_view.add_job(job_name, my_job)
 
@@ -265,6 +284,7 @@ my_view.add_job(job_name, my_job)
 #    logger.error('View was not deleted')
 #else:
 #    logger.info('View has been deleted')
+
 
 for job in jenkins.views[test_view_name].items():
      print(job)
