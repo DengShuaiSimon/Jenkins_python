@@ -38,12 +38,15 @@ def getDicFromConf(path):
 	new_len = len(conf_arr);
 	#print('len:',len(conf_arr))
 	isbundle = 0  ##Record if there is the bundle 
+	isplugin = 0
 	for i in range(0,len(conf_arr)):
 		if conf_arr[i]=="[customize_bundle]":
 			begin=i
 			isbundle=1
 			new_len = begin+1
+	for i in range(0,len(conf_arr)):
 		if ('customize_plugin' in conf_arr[i] and isbundle):
+			isplugin=1
 			end=i-1;
 			new_len=new_len+1
 
@@ -210,7 +213,7 @@ command_text = pass
 '''
 
 template_job_name = "ds_project_template"#"test8"#"ds_project_template"
-config_name = "config.xml"
+config_name = "config.xml"##"project_xml_template.xml"
 config = jenkins[template_job_name].get_config()
 f = open(config_name,'w')
 f.write(config)
@@ -253,10 +256,72 @@ if job_name in jenkins.jobs:
 else:
    job = jenkins.create_job(jobname=job_name, xml=xml);
 
+def change_Schedule(projectname,time_str):
+	job = jenkins[projectname]
+	conf = job.get_config()
+	root1 = ET.fromstring(conf.strip())
+	triggers1 = root1.find('triggers')
+	timerTrigger1 = triggers1.find('hudson.triggers.TimerTrigger')
+	if timerTrigger1 is None:
+		timerTrigger1 = ET.SubElement(triggers1,'hudson.triggers.TimerTrigger')
+	spec1 = timerTrigger1.find('spec')
+	if spec1 is None:
+		spec1 = ET.SubElement(timerTrigger1,'spec')
+	spec1.text = time_str
+	conf_str = ET.tostring(root1).decode('utf-8')
+	job.update_config(conf_str)
+	#tree1 = ET.ElementTree(root1)
+	#tree1.write('new1.xml',xml_declaration=True, encoding='utf-8', method="xml")
+
+def change_Assigned_Node(projectname,node_str):
+	job = jenkins[projectname]
+	conf = job.get_config()
+	root1 = ET.fromstring(conf.strip())
+	node = root.find('assignedNode')
+	if node is None:
+		node = ET.SubElement(root,'assignedNode')
+	node.text = node_str
+	conf_str = ET.tostring(root1).decode('utf-8')
+	job.update_config(conf_str)
+	#tree1 = ET.ElementTree(root1)
+	#tree1.write('new1.xml',xml_declaration=True, encoding='utf-8', method="xml")
+
+def change_Description(projectname,des_str):
+	job = jenkins[projectname]
+	conf = job.get_config()
+	root1 = ET.fromstring(conf.strip())
+	des = root.find('description')
+	if des is None:
+		des = ET.SubElement(root,'description')
+	des.text = des_str
+	conf_str = ET.tostring(root1).decode('utf-8')
+	job.update_config(conf_str)
+	#tree1 = ET.ElementTree(root1)
+	#tree1.write('new1.xml',xml_declaration=True, encoding='utf-8', method="xml")
+	
+
+'''
 ###build a job,params is optional
-#params = {'VERSION': '1.2.3', 'PYTHON_VER': '2.7'}
+params = {'VERSION': '1.2.3', 'PYTHON_VER': '2.7'}
 #jenkins.build_job(job_name,params)
 
+
+# This will start the job in non-blocking manner
+jenkins.build_job('foo', params)
+
+
+# This will start the job and will return a QueueItem object which
+# can be used to get build results
+job = jenkins['foo']
+qi = job.invoke(build_params=params) ##params can be None.
+
+# Block this script until build is finished
+if qi.is_queued() or qi.is_running():
+    qi.block_until_complete()
+
+build = qi.get_build()
+print(build)
+'''
 
 # Get job from Jenkins by job name
 my_job = jenkins[job_name]
@@ -289,3 +354,5 @@ my_view.add_job(job_name, my_job)
 for job in jenkins.views[test_view_name].items():
      print(job)
 
+###python createJob.py -g group2 -s "H 6 * * *"/disable
+###python createJob.py -p project_name
