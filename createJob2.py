@@ -1,6 +1,7 @@
 from __future__ import print_function
 ###from pkg_resources import resource_string
 from jenkinsapi.jenkins import Jenkins
+from jenkinsapi.job import Job
 from jenkinsapi.views import Views   ##for nested view
 import logging
 import xml.etree.ElementTree as ET
@@ -352,6 +353,15 @@ def change_Command(jenkins,projectname,command_str):
 
 
 
+def change_group_jobs_schedule(jenkins,group_name,timer_str):
+	if group_name in jenkins.views:
+		for job in jenkins.views[group_name].items():
+			print(job[0])
+			change_Schedule(jenkins,job[0],timer_str)##job[0]===>the name of job
+	else:
+		#logger.info('View has been deleted')
+		logger.error(group_name+' is not in jenkins.\n')
+
 
 if __name__ == '__main__':
 	jenkins_url = 'http://127.0.0.1:8080' #'http://10.2.4.25:8080'
@@ -368,6 +378,9 @@ if __name__ == '__main__':
 	change_Assigned_Node(jenkins,"test7","12345")
 	change_Schedule(jenkins,"test7","H 2 * * *")
 	change_Command(jenkins,"test7","dir")
+	
+	change_group_jobs_schedule(jenkins,"ds_group2","H 8 * * *")
+	
 
 '''
 ###build a job,params is optional
