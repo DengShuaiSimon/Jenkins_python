@@ -84,7 +84,7 @@ def getDicFromConf(path):
 			str1=str1.strip()
 			str2=str2.strip()
 			conf_dic[str1]=str2
-	print('conf_dic:',conf_dic,'\n','conf_dic_len:',len(conf_dic),'\n')
+	#print('conf_dic:',conf_dic,'\n','conf_dic_len:',len(conf_dic),'\n')
 	return conf_dic
 
 def get_Xml_From_Conf_And_Template_Xml(conf_file):
@@ -102,29 +102,30 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 	if 'project_name' in conf_dic.keys():
 		job_name = conf_dic['project_name']
 	else:
-		print('Please set project_name in jenkins_project.conf.\n')
+		logger.error('Please set project_name in jenkins_project.conf.\n')
 
 	if 'group_name' in conf_dic.keys():
 		test_view_name = conf_dic['group_name']
 	else:
-		print('Please set group_name in jenkins_project.conf.\n')
+		logger.info('There is not group_name in jenkins_project.conf.\n')
 	
 	if 'test_cluster' in conf_dic.keys():
 		assignedNode = conf_dic['test_cluster']
 	else:
-		print('Please set test_cluster in jenkins_project.conf.\n')
+		logger.info('There is not test_cluster in jenkins_project.conf.\n')
 
 	if 'build_schedule' in conf_dic.keys():
 		str = conf_dic['build_schedule']
-		timerTrigger_text = 'H '+ str + ' * * *'
+		#timerTrigger_text = 'H '+ str + ' * * *'
+		timerTrigger_text = str
 	else:
-		print('Please set build_schedule in jenkins_project.conf.\n')
+		logger.info('There is not build_schedule in jenkins_project.conf.\n')
 
 	if 'os' in conf_dic.keys():
 		XCAT_TEST_OS = conf_dic['os']
 	else:
 		#raise Exception("Please set os in jenkins_project.conf.\n!")
-		print('Please set os in jenkins_project.conf.\n')
+		logger.error('Please set os in jenkins_project.conf.\n')
 
 	'''
 	if 'arch' in conf_dic.keys():
@@ -135,7 +136,7 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 	XCAT_TEST_BRANCH_OR_CORE = ''
 	if ('branch' in conf_dic.keys() and 'customize_xcat_core' in conf_dic.keys()):
 		#raise Exception("Branch and XCAT_TEST_CORE are conflicting.Please reset the configuration file.\n")
-		print('Branch and XCAT_TEST_CORE are conflicting.Please reset the configuration file.\n')	
+		logger.error('Branch and XCAT_TEST_CORE are conflicting.Please reset the configuration file.\n')	
 	elif 'branch' in conf_dic.keys():
 		branch_str = conf_dic['branch']
 		XCAT_TEST_BRANCH_OR_CORE = '#---------To spcify target xcat build---------\n\n#If need to test your own build.\n#comment "XCAT_TEST_BRANCH" line out,move "#" out of below "XCAT_TEST_CORE" line and set corect value\n#if need to test the latest daily build in build server,\n#comment "XCAT_TEST_CORE" line out,move "#" out of below "XCAT_TEST_BRANCH" line and set corect value\n#for example : master or 2.13\n\nexport XCAT_TEST_BRANCH=%s\n\n' % (branch_str)
@@ -143,14 +144,14 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 		core_str = conf_dic['customize_xcat_core']
 		XCAT_TEST_BRANCH_OR_CORE = '#---------To spcify target xcat build---------\n\n#If need to test your own build.\n#comment "XCAT_TEST_BRANCH" line out,move "#" out of below "XCAT_TEST_CORE" line and set corect value\n#if need to test the latest daily build in build server,\n#comment "XCAT_TEST_CORE" line out,move "#" out of below "XCAT_TEST_BRANCH" line and set corect value\n#for example : master or 2.13\n\nexport XCAT_TEST_CORE=%s\n\n\n' % (core_str)
 	else:
-		print('Please set customize_xcat_core or branch in jenkins_project.conf.\n')
+		logger.error('Please set customize_xcat_core or branch in jenkins_project.conf.\n')
 
 	if 'customize_xcat_dep' in conf_dic.keys():
 		dep_str = conf_dic['customize_xcat_dep']
 		XCAT_TEST_DEP = '#---------To spcify target xcat dependency package---------\n\n#If not set, will use the latest dependency package in xcat.org\nexport XCAT_TEST_DEP=%s\n\n' % (dep_str)
 	else:
 		XCAT_TEST_DEP = ''
-		print('Here didn\'t set customize_xcat_dep in jenkins_project.conf.\n')
+		logger.info('There is not customize_xcat_dep in jenkins_project.conf.\n')
 
 	development = '#For automation development environment, using below 2 line  [RECOMMEND]\nexport XCAT_TEST_GIT_REPO=git@github.ibm.com:gongjie/jenkins.git\nexport XCAT_TEST_GIT_BRANCH=devel\n\n';
 	product = '#For automation product environment, using below 2 line  [NOT RECOMMEND]\nexport XCAT_TEST_GIT_REPO=git@github.ibm.com:xcat2/jenkins.git\nexport XCAT_TEST_GIT_BRANCH=master\n\n\n';#####Now firstly code commenting in production 
@@ -165,21 +166,21 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 			#jenkins_url = 'http://10.4.32.1:8080'
 			#jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
 	else:
-		print('Please set automation_env in jenkins_project.conf.\n')
+		logger.error('Please set automation_env in jenkins_project.conf.\n')
 
 	if 'mailing_list' in conf_dic.keys():
 		mailing_str = conf_dic['mailing_list']
 		XCAT_TEST_MAILING_LIST = '#---------To specify mailing list ---------\n#using comma to separate different people\nexport XCAT_TEST_MAILING_LIST=%s\n\n' % (mailing_str)
 	else:
 		XCAT_TEST_MAILING_LIST = ''
-		print('Here didn\'t set mailing_list in jenkins_project.conf.')
+		logger.info('There is not mailing_list in jenkins_project.conf.')
 
 	if 'database' in conf_dic.keys():
 		database_str = conf_dic['database']
 		XCAT_TEST_DATABASE = '#---------To specify the database type----------\n\n#Using Mysql by default\nexport XCAT_TEST_DATABASE=%s\n\n' % (database_str)
 	else:
 		XCAT_TEST_DATABASE = ''
-		print('Here didn\'t set database in jenkins_project.conf.')
+		logger.info('There is not database in jenkins_project.conf.')
 
 
 
@@ -192,14 +193,14 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 		BUNDLE_STR = '#---------To specify test case list ---------\n\n#If need to customize you own case list,\n#paste you case in bundle array\ndeclare -a bundle=(\n%s)\nexport XCAT_TEST_CASE="${bundle[*]}"\n\n' % (bundles_str);
 	else:
 		BUNDLE_STR = ''
-		print('Here didn\'t set [customize_bundle] in jenkins_project.conf.')
+		logger.info('There is not [customize_bundle] in jenkins_project.conf.')
 
 	if 'customize_plugin' in conf_dic.keys():
 		plugin_str = conf_dic['customize_plugin']
 		XCAT_TEST_PLUGIN = '#---------To specify the additional plugin----------\n\n#using this attribute to specify some customize script which\'s result will be inserted into normal mail report\n#The plugin script should be check in Jenkins repo "~/jenkins/plugin" ahead.\nexport XCAT_TEST_PLUGIN=%s\n\n' % (plugin_str)
 	else:
 		XCAT_TEST_PLUGIN = ''
-		print('Here didn\'t set customize_plugin in jenkins_project.conf.')
+		logger.info('There is not customize_plugin in jenkins_project.conf.')
 
 	command_text='#!/bin/bash\n\nset -x\n\n#---------To spcify OS wanted to run whole test based on---------\n\n#[naming rule]:\n#The os name should be consistent with the os name which xcat copycds generated.\n#Take redhat7.3 for example,the osimage name is rhels7.3-ppc64le-install-compute,\n#the value of XCAT_TEST_OS should be rhels7.3\nexport XCAT_TEST_OS=%s\n\n\n%s%s#---------To spcify automation framework code repo---------\n\n%s%s%s%s\n%s#----------------DO NOT MODIFY BELOW LINES-------------\n\ncp /tmp/dengshuai/test.sh .\n./test.sh' % (XCAT_TEST_OS,XCAT_TEST_BRANCH_OR_CORE,XCAT_TEST_DEP,AUTOMATION_ENV,XCAT_TEST_MAILING_LIST,BUNDLE_STR,XCAT_TEST_DATABASE,XCAT_TEST_PLUGIN)
 
@@ -353,12 +354,15 @@ def getDicFromXml(jenkins,projectname):
 			logger.info("build_schedule is None")
 		else:
 			spec = timerTrigger.find('spec')
+			spec_arr = timerTrigger.findall('spec')
 			if spec is None:
 				logger.info("build_schedule is None")
 			elif spec.text is None:
 				logger.info("spec.text is None")
+			elif spec_arr[len(spec_arr)-1].text is None:
+				logger.info("The last spec.text is None")
 			else:
-				conf_dic["build_schedule"]=spec.text
+				conf_dic["build_schedule"]=spec_arr[len(spec_arr)-1].text
 	
 	builders = root.find('builders')
 	if builders is None:
@@ -671,7 +675,7 @@ def get_Command(jenkins,projectname):
 def change_group_jobs_schedule(jenkins,group_name,timer_str):
 	if group_name in jenkins.views:
 		for job in jenkins.views[group_name].items():
-			print(job[0])
+			#print(job[0])
 			change_Schedule(jenkins,job[0],timer_str)##job[0]===>the name of job
 	else:
 		#logger.info('View has been deleted')
@@ -740,7 +744,7 @@ def main(argv):
 			master = arg
 			jenkins_url = 'http://'+master+':8080' #'http://10.2.4.25:8080'
 			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
-			print(jenkins_url)
+			#print(jenkins_url)
 			'''
 			if master == '10.2.4.25':
 				jenkins_url = 'http://10.2.4.25:8080'
@@ -761,7 +765,7 @@ def main(argv):
 		elif opt in ("-p","--project"):
 			project_name = arg
 			if is_s==False:
-				print("run to -p\n")
+				#print("run to -p\n")
 				project_name = arg
 				##To get configuration of a project
 				conf_str=get_Config_String_From_Xml(jenkins,project_name)
