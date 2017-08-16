@@ -308,135 +308,149 @@ def getDicFromXml(jenkins,projectname):
 	root = ET.fromstring(conf.strip())
 	node = root.find('assignedNode')
 	if node is None:
-		return None
-	conf_dic["test_cluster"]=node.text
+		logger.info("assigenedNode is None")
+	elif node.text is None:
+		logger.info("node.text is None")
+	else:
+		conf_dic["test_cluster"]=node.text
 	
 	triggers = root.find('triggers')
-	timerTrigger = triggers.find('hudson.triggers.TimerTrigger')
-	if timerTrigger is None:
-		return None
-	spec = timerTrigger.find('spec')
-	if spec is None:
-		return None
-	conf_dic["build_schedule"]=spec.text
+	if triggers is None:
+		logger.info("triggers is None")
+	else:
+		timerTrigger = triggers.find('hudson.triggers.TimerTrigger')
+		if timerTrigger is None:
+			logger.info("build_schedule is None")
+		else:
+			spec = timerTrigger.find('spec')
+			if spec is None:
+				logger.info("build_schedule is None")
+			elif spec.text is None:
+				logger.info("spec.text is None")
+			else:
+				conf_dic["build_schedule"]=spec.text
 	
 	builders = root.find('builders')
 	if builders is None:
-		return None
-	shell = builders.find('hudson.tasks.Shell')
-	if shell is None:
-		return None
-	command = shell.find('command')
-	if command is None:
-		return None
-	command_str = command.text
-	
-	commandList = command_str.split("\n")
-	for line in commandList:
-		line=line.strip()
-		index = line.find('#')
-		if line == '' or index == 0:
-			continue;
-		elif index == -1:##the line don't include '#'
-			#print('index:',index)
-			conf_arr.append(line)
+		logger.info('builders is None.\n')
+	else:
+		shell = builders.find('hudson.tasks.Shell')
+		if shell is None:
+			logger.info("shell is None.\n")
 		else:
-			line = line[0:index]; line= line.strip(); conf_arr.append(line);
-	begin=0
-	end=len(conf_arr)-1
-	new_len=len(conf_arr)
-	#isbundle = 0  ##Record if there is the bundle 
-	#isplugin = 0
-	for i in range(0,len(conf_arr)):
-		if conf_arr[i]=="declare -a bundle=(":
-			begin=i
-			isbundle=1
-		if conf_arr[i]==")":
-			end=i
-	if isbundle:
-		for j in range(begin+1,end):
-			bundle_arr.append(conf_arr[j])
-	for k in range(0,len(conf_arr)):
-		str = conf_arr[k]
-		if '=' in str:
-			kv_arr = str.split('=')
-			str1=kv_arr[0]
-			str2=kv_arr[1]
-			str1=str1.strip()
-			str2=str2.strip()
-			if 'XCAT_TEST_OS' in str1:
-				conf_dic['os']=str2
-			elif 'XCAT_TEST_BRANCH' in str1:
-				conf_dic['branch']=str2
-			elif 'XCAT_TEST_CORE' in str1:
-				conf_dic['customize_xcat_core']=str2
-			elif 'XCAT_TEST_DEP' in str1:
-				conf_dic['customize_xcat_dep']=str2
-			elif 'XCAT_TEST_GIT_BRANCH' in str1:
-				if str2=="devel":
-					conf_dic['automation_env']="development"
-				elif str2=="master":
-					conf_dic['automation_env']="production"
-			elif 'XCAT_TEST_MAILING_LIST' in str1:
-				conf_dic['mailing_list']=str2
-			elif 'XCAT_TEST_DATABASE' in str1:
-				conf_dic['database']=str2
-			elif 'bundle' in str1:
-				conf_dic['[customize_bundle]']=bundle_arr
-			elif 'XCAT_TEST_PLUGIN' in str1:
-				conf_dic['customize_plugin']=str2
+			command = shell.find('command')
+			if command is None:
+				logger.info("command is None.\n")
+			elif command.text is None:
+				logger.info("command.text is None.\n")
+			else:
+				command_str = command.text
+				commandList = command_str.split("\n")
+				for line in commandList:
+					line=line.strip()
+					index = line.find('#')
+					if line == '' or index == 0:
+						continue;
+					elif index == -1:##the line don't include '#'
+						#print('index:',index)
+						conf_arr.append(line)
+					else:
+						line = line[0:index]; line= line.strip(); conf_arr.append(line);
+				begin=0
+				end=len(conf_arr)-1
+				new_len=len(conf_arr)
+				#isbundle = 0  ##Record if there is the bundle 
+				#isplugin = 0
+				for i in range(0,len(conf_arr)):
+					if conf_arr[i]=="declare -a bundle=(":
+						begin=i
+						isbundle=1
+					if conf_arr[i]==")":
+						end=i
+				if isbundle:
+					for j in range(begin+1,end):
+						bundle_arr.append(conf_arr[j])
+				for k in range(0,len(conf_arr)):
+					str = conf_arr[k]
+					if '=' in str:
+						kv_arr = str.split('=')
+						str1=kv_arr[0]
+						str2=kv_arr[1]
+						str1=str1.strip()
+						str2=str2.strip()
+						if 'XCAT_TEST_OS' in str1:
+							conf_dic['os']=str2
+						elif 'XCAT_TEST_BRANCH' in str1:
+							conf_dic['branch']=str2
+						elif 'XCAT_TEST_CORE' in str1:
+							conf_dic['customize_xcat_core']=str2
+						elif 'XCAT_TEST_DEP' in str1:
+							conf_dic['customize_xcat_dep']=str2
+						elif 'XCAT_TEST_GIT_BRANCH' in str1:
+							if str2=="devel":
+								conf_dic['automation_env']="development"
+							elif str2=="master":
+								conf_dic['automation_env']="production"
+						elif 'XCAT_TEST_MAILING_LIST' in str1:
+							conf_dic['mailing_list']=str2
+						elif 'XCAT_TEST_DATABASE' in str1:
+							conf_dic['database']=str2
+						elif 'bundle' in str1:
+							conf_dic['[customize_bundle]']=bundle_arr
+						elif 'XCAT_TEST_PLUGIN' in str1:
+							conf_dic['customize_plugin']=str2
 	return conf_dic
 
 def get_Config_String_From_Xml(jenkins,projectname):
 	conf_dic = getDicFromXml(jenkins,projectname)
-	if 'project_name' in conf_dic.keys() and conf_dic['project_name'] is not None:
+	if 'project_name' in conf_dic.keys():
 		project_str ='#---------------\nproject_name=' + conf_dic['project_name'] + '\n'
 	else:
 		project_str = ''
-	if 'test_cluster' in conf_dic.keys() and conf_dic['test_cluster'] is not None:
+	if 'test_cluster' in conf_dic.keys():
 		cluster_str = 'test_cluster=' + conf_dic['test_cluster'] + '\n'
 	else:
 		cluster_str = ''
-	if 'build_schedule' in conf_dic.keys() and conf_dic['build_schedule'] is not None:
+	if 'build_schedule' in conf_dic.keys():
 		schedule_str = 'build_schedule=' + conf_dic['build_schedule'] + '   #valid value are now or one time, such like 5\n\n'
 	else:
 		schedule_str = ''
-	if 'os' in conf_dic.keys() and conf_dic['os'] is not None:
+	if 'os' in conf_dic.keys():
 		os_str = '#--------------------\nos=' + conf_dic['os'] + '\n'
 	else:
 		os_str = ''
-	if 'branch' in conf_dic.keys() and conf_dic['branch'] is not None:
+	if 'branch' in conf_dic.keys():
 		branch_str = '#--------------------\nbranch=' + conf_dic['branch'] + '   #valid value are master, 2.13\n'
 	else:
 		branch_str = ''
-	if 'customize_xcat_core' in conf_dic.keys() and conf_dic['customize_xcat_core'] is not None:
+	if 'customize_xcat_core' in conf_dic.keys():
 		core_str = '#--------------------\ncustomize_xcat_core=' + conf_dic['customize_xcat_core'] + '\n'
 	else:
 		core_str = ''
-	if 'customize_xcat_dep' in conf_dic.keys() and conf_dic['customize_xcat_dep'] is not None:
+	if 'customize_xcat_dep' in conf_dic.keys():
 		dep_str = 'customize_xcat_dep=' + conf_dic['customize_xcat_dep'] + '\n\n'
 	else:
 		dep_str = ''
-	if 'automation_env' in conf_dic.keys() and conf_dic['automation_env'] is not None:
+	if 'automation_env' in conf_dic.keys():
 		env_str = '#To choose atuomation environment\nautomation_env=' + conf_dic['automation_env'] + '   #valid value are development,production\n\n'
 	else:
 		env_str = ''
-	if 'mailing_list' in conf_dic.keys() and conf_dic['mailing_list'] is not None:
+	if 'mailing_list' in conf_dic.keys():
 		mailing_str = '#---------------\nmailing_list=' + conf_dic['mailing_list'] + '\n\n'
 	else:
 		mailing_str = ''
-	if 'database' in conf_dic.keys() and conf_dic['database'] is not None:
+	if 'database' in conf_dic.keys():
 		database_str = '#---------------\ndatabase=' + conf_dic['database'] + '   #valid value are PostgreSQL and MySQL\n\n'
 	else:
 		database_str = ''
-	if '[customize_bundle]' in conf_dic.keys() and conf_dic['[customize_bundle]'] is not None:
+	if '[customize_bundle]' in conf_dic.keys():
 		bundle_arr = conf_dic['[customize_bundle]']
 		bundle_str='#---------------\n[customize_bundle]\n'
 		for one in bundle_arr:
 			bundle_str = bundle_str + one + '\n'
 	else:
 		bundle_str = ''
-	if 'customize_plugin' in conf_dic.keys() and conf_dic['customize_plugin'] is not None:
+	if 'customize_plugin' in conf_dic.keys():
 		plugin_str = '\n#--------------------\ncustomize_plugin=' + conf_dic['customize_plugin'] + '\n'
 	else:
 		plugin_str = ''
