@@ -113,6 +113,7 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 		assignedNode = conf_dic['test_cluster']
 	else:
 		logger.info('There is not test_cluster in jenkins_project.conf.\n')
+		assignedNode = ''
 
 	if 'build_schedule' in conf_dic.keys():
 		str = conf_dic['build_schedule']
@@ -255,7 +256,8 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 	node = root.find('assignedNode')
 	if node is None:
 		node = ET.SubElement(root,'assignedNode')
-	node.text = assignedNode
+	else:
+		node.text = assignedNode
 	
 	triggers = root.find('triggers')
 	timerTrigger = triggers.find('hudson.triggers.TimerTrigger')
@@ -264,7 +266,8 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 	spec = timerTrigger.find('spec')
 	if spec is None:
 		spec = ET.SubElement(timerTrigger,'spec')
-	spec.text = timerTrigger_text
+	else:
+		spec.text = timerTrigger_text
 	
 	builders = root.find('builders')
 	if builders is None:
@@ -275,7 +278,8 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 	command = shell.find('command')
 	if command is None:
 		command = ET.SubElement(shell,'command')
-	command.text = command_text
+	else:
+		command.text = command_text
 	xml = ET.tostring(root).decode('utf-8')
 	return xml
 	'''
