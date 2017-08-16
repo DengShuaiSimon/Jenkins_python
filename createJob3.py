@@ -158,12 +158,12 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 		env = conf_dic['automation_env']
 		if env == 'development':
 			AUTOMATION_ENV = development
-			jenkins_url = 'http://127.0.0.1:8080' #'http://10.2.4.25:8080'
-			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080") #Jenkins(jenkins_url,username="admin",password="cluster")
+			#jenkins_url = 'http://10.2.4.25:8080'#'http://127.0.0.1:8080' #
+			#jenkins =  Jenkins(jenkins_url,username="admin",password="cluster") #Jenkins(jenkins_url,username="dengshuai_super",password="8080") #
 		elif env == 'production':
 			AUTOMATION_ENV = product
-			jenkins_url = 'http://10.4.32.1:8080'
-			jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
+			#jenkins_url = 'http://10.4.32.1:8080'
+			#jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
 	else:
 		print('Please set automation_env in jenkins_project.conf.\n')
 
@@ -282,16 +282,46 @@ def get_Xml_From_Conf_And_Template_Xml(conf_file):
 	tree.write(config_output_name,xml_declaration=True, encoding='utf-8', method="xml")
 '''
 
+
 def create_job_by_conf(conf_file):
-	get_Xml_From_Conf_And_Template_Xml(conf_file)
-	#job_name = 'ds_project_test1'#foo_job1
-	###xml = resource_string('examples', 'addjob.xml')
+	jenkins = None
+	is_group = False
+	test_view_name=''
+	conf_dic=getDicFromConf(conf_file)
+	if 'project_name' in conf_dic.keys():
+		job_name = conf_dic['project_name']
+	else:
+		logger.error('Please set project_name in jenkins_project.conf.\n')
+	if 'automation_env' in conf_dic.keys():
+		env = conf_dic['automation_env']
+		if env == 'development':
+			jenkins_url = 'http://127.0.0.1:8080' #'http://10.2.4.25:8080'#
+			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080") #Jenkins(jenkins_url,username="admin",password="cluster") #
+		elif env == 'production':
+			jenkins_url = 'http://10.4.32.1:8080'
+			jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
+	else:
+		logger.error('Please set automation_env in jenkins_project.conf.\n')
+	if 'group_name' in conf_dic.keys():
+		test_view_name = conf_dic['group_name']
+		is_group = True
+	else:
+		pass
+		#logger.info('There is not group_name in jenkins_project.conf.\n')
 	#xml = open('./addjob.xml',encoding='utf8').read()
 	#xml = open(config_output_name).read()
-	if job_name in jenkins.jobs:
-		logger.info('the job named '+job_name+' already exists\n')
+	xml=get_Xml_From_Conf_And_Template_Xml(conf_file)
+	if job_name in jenkins.jobs.keys(): ##jenkins.has_job(job_name)
+		logger.info('The job named '+job_name+' already exists. And it will update config by the config file\n')
+		job = jenkins[job_name]
+		job.update_config(xml)
 	else:
-		job = jenkins.create_job(jobname=job_name, xml=xml);
+		if is_group:
+			my_job = jenkins.create_job(jobname=job_name, xml=xml);
+			my_view = jenkins.views.create(test_view_name)
+			my_view.add_job(job_name, my_job)
+		else:
+			logger.error("There is not group_name in jenkins_project.conf.\n")
 
 def getDicFromXml(jenkins,projectname):
 	#config = jenkins[projectname].get_config()
@@ -530,7 +560,7 @@ def change_Schedule(jenkins,projectname,timer_str):
 			pass
 		elif len(spec_arr)==2:
 			spec_tmp = spec_arr[1]
-			print(spec_tmp.text)
+			#print(spec_tmp.text)
 			if spec_tmp.text == '' or spec_tmp.text is None:
 				timerTrigger.remove(spec_tmp)
 		elif len(spec_arr)>2:
@@ -710,6 +740,7 @@ def main(argv):
 			master = arg
 			jenkins_url = 'http://'+master+':8080' #'http://10.2.4.25:8080'
 			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
+			print(jenkins_url)
 			'''
 			if master == '10.2.4.25':
 				jenkins_url = 'http://10.2.4.25:8080'
@@ -718,6 +749,10 @@ def main(argv):
 				jenkins_url = 'http://10.4.32.1:8080'
 				jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
 			'''
+		elif opt in ("-c","--configuration"):
+			config_file_path = arg
+			create_job_by_conf(config_file_path)
+			sys.exit()
 		elif opt in ("-l","--list"):
 			print_groupList(jenkins)
 			sys.exit()
@@ -725,12 +760,13 @@ def main(argv):
 			group = arg
 		elif opt in ("-p","--project"):
 			project_name = arg
-		elif opt in ("-p","--project") and is_s==False:
-			project_name = arg
-			##To get configuration of a project
-			conf_str=get_Config_String_From_Xml(jenkins,project_name)
-			print(conf_str)
-			sys.exit()
+			if is_s==False:
+				print("run to -p\n")
+				project_name = arg
+				##To get configuration of a project
+				conf_str=get_Config_String_From_Xml(jenkins,project_name)
+				print(conf_str)
+				sys.exit()
 		elif (opt in ("-s", "--schedule") and is_g):
 			timer = arg
 			change_group_jobs_schedule(jenkins,group,timer)
