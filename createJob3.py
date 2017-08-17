@@ -11,8 +11,9 @@ import fileinput
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
-
-
+reload(sys)
+sys.setdefaultencoding("utf8")
+#sys.getdefaultencoding()
 
 ###############get information from jenkins_project.conf#############
 def getDicFromConf(path):
@@ -300,8 +301,8 @@ def create_job_by_conf(conf_file):
 	if 'automation_env' in conf_dic.keys():
 		env = conf_dic['automation_env']
 		if env == 'development':
-			jenkins_url = 'http://127.0.0.1:8080' #'http://10.2.4.25:8080'#
-			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080") #Jenkins(jenkins_url,username="admin",password="cluster") #
+			jenkins_url = 'http://10.2.4.25:8080'#'http://127.0.0.1:8080' #
+			jenkins =  Jenkins(jenkins_url,username="admin",password="cluster") #Jenkins(jenkins_url,username="dengshuai_super",password="8080") #
 		elif env == 'production':
 			jenkins_url = 'http://10.4.32.1:8080'
 			jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
@@ -695,7 +696,7 @@ To list existed projects with their group:
     $program_name -m <jenkins_master> -l
  
 To modify specific attribute of all project in a group:
-    $program_name -m <jenkins_master>  -g  <group_name> [-s <disable| * 5 * * *>]
+    $program_name -m <jenkins_master>  -g  <group_name> [-s <disable| "H 5 * * *">]
  
 To get configuration of a project
     $program_name -m <jenkins_master>  -p  <project_name>
@@ -705,11 +706,11 @@ To modify attributes of a project
  
 Options:
     -l: list all group/project information.
-    -m: Specify Jenkins’ master.  The vaild values are dev (means automation development environment) or pro (means automation product environment)
+    -m: Specify Jenkins' master.  The vaild values are dev (means automation development environment) or pro (means automation product environment)
     -g: Specify group name in Jenkins master.
     -p: Specify project name in Jenkins master.
     -c: Specify project configuration file.
-    -s: Schedule a time when a group starts to run.  The valid values are disable or '* 8 * * *' '''
+    -s: Schedule a time when a group starts to run.  The valid values are disable or "H 8 * * *" '''
 	print(usage_str)
 
 def print_groupList(jenkins):
@@ -747,8 +748,8 @@ def main(argv):
 		elif opt in ("-m", "--master"):
 			master = arg
 			jenkins_url = 'http://'+master+':8080' #'http://10.2.4.25:8080'
-			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
-			#print(jenkins_url)
+			#jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
+			jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")
 			'''
 			if master == '10.2.4.25':
 				jenkins_url = 'http://10.2.4.25:8080'
