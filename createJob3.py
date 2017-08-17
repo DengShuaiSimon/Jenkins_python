@@ -6,13 +6,16 @@ from jenkinsapi.views import Views   ##for nested view
 import logging
 import xml.etree.ElementTree as ET
 #import ConfigParser 
-import string,os,sys,getopt
+import string,os,sys,getopt,platform
 import fileinput 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
-reload(sys)
-sys.setdefaultencoding("utf8")
+version_str=platform.python_version()
+version_float=float(version_str[0:2])
+if version_float<3.0:
+	reload(sys)
+	sys.setdefaultencoding("utf8")
 #sys.getdefaultencoding()
 
 ###############get information from jenkins_project.conf#############
@@ -748,8 +751,8 @@ def main(argv):
 		elif opt in ("-m", "--master"):
 			master = arg
 			jenkins_url = 'http://'+master+':8080' #'http://10.2.4.25:8080'
-			#jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
-			jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")
+			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
+			#jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")
 			'''
 			if master == '10.2.4.25':
 				jenkins_url = 'http://10.2.4.25:8080'
