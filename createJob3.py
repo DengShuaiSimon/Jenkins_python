@@ -332,7 +332,7 @@ def create_job_by_conf(conf_file):
 		else:
 			logger.error("There is not group_name in jenkins_project.conf.\n")
 
-def getDicFromXml(jenkins,projectname):
+def getDicFromXml(jenkins,projectname,is_logger):
 	#config = jenkins[projectname].get_config()
 	#f = open("config_text",'w')
 	#f.write(config)
@@ -347,44 +347,54 @@ def getDicFromXml(jenkins,projectname):
 	root = ET.fromstring(conf.strip())
 	node = root.find('assignedNode')
 	if node is None:
-		logger.info("assigenedNode is None")
+		if is_logger:
+			logger.info("assigenedNode is None")
 	elif node.text is None:
-		logger.info("node.text is None")
+		if is_logger:
+			logger.info("node.text is None")
 	else:
 		conf_dic["test_cluster"]=node.text
-	
 	triggers = root.find('triggers')
 	if triggers is None:
-		logger.info("triggers is None")
+		if is_logger:
+			logger.info("triggers is None")
 	else:
 		timerTrigger = triggers.find('hudson.triggers.TimerTrigger')
 		if timerTrigger is None:
-			logger.info("build_schedule is None")
+			if is_logger:
+				logger.info("build_schedule is None")
 		else:
 			spec = timerTrigger.find('spec')
 			spec_arr = timerTrigger.findall('spec')
 			if spec is None:
-				logger.info("build_schedule is None")
+				if is_logger:
+					logger.info("build_schedule is None")
 			elif spec.text is None:
-				logger.info("spec.text is None")
+				if is_logger:
+					logger.info("spec.text is None")
 			elif spec_arr[len(spec_arr)-1].text is None:
-				logger.info("The last spec.text is None")
+				if is_logger:
+					logger.info("The last spec.text is None")
 			else:
 				conf_dic["build_schedule"]=spec_arr[len(spec_arr)-1].text
 	
 	builders = root.find('builders')
 	if builders is None:
-		logger.info('builders is None.\n')
+		if is_logger:
+			logger.info('builders is None.\n')
 	else:
 		shell = builders.find('hudson.tasks.Shell')
 		if shell is None:
-			logger.info("shell is None.\n")
+			if is_logger:
+				logger.info("shell is None.\n")
 		else:
 			command = shell.find('command')
 			if command is None:
-				logger.info("command is None.\n")
+				if is_logger:
+					logger.info("command is None.\n")
 			elif command.text is None:
-				logger.info("command.text is None.\n")
+				if is_logger:
+					logger.info("command.text is None.\n")
 			else:
 				command_str = command.text
 				commandList = command_str.split("\n")
@@ -401,7 +411,7 @@ def getDicFromXml(jenkins,projectname):
 				begin=0
 				end=len(conf_arr)-1
 				new_len=len(conf_arr)
-				#isbundle = 0  ##Record if there is the bundle 
+				isbundle = 0  ##Record if there is the bundle 
 				#isplugin = 0
 				for i in range(0,len(conf_arr)):
 					if conf_arr[i]=="declare -a bundle=(":
@@ -441,10 +451,73 @@ def getDicFromXml(jenkins,projectname):
 							conf_dic['[customize_bundle]']=bundle_arr
 						elif 'XCAT_TEST_PLUGIN' in str1:
 							conf_dic['customize_plugin']=str2
+					else:
+						continue;
 	return conf_dic
 
+def get_Config_String_From_Xml_No_Comment(jenkins,projectname,is_logger):
+	if is_logger:
+		conf_dic = getDicFromXml(jenkins,projectname,True)
+	else:
+		conf_dic = getDicFromXml(jenkins,projectname,False)
+	if 'project_name' in conf_dic.keys():
+		project_str ='project_name=' + conf_dic['project_name'] + '\n'
+	else:
+		project_str = ''
+	if 'test_cluster' in conf_dic.keys():
+		cluster_str = 'test_cluster=' + conf_dic['test_cluster'] + '\n'
+	else:
+		cluster_str = ''
+	if 'build_schedule' in conf_dic.keys():
+		schedule_str = 'build_schedule=' + conf_dic['build_schedule'] + '\n'
+	else:
+		schedule_str = ''
+	if 'os' in conf_dic.keys():
+		os_str = 'os=' + conf_dic['os'] + '\n'
+	else:
+		os_str = ''
+	if 'branch' in conf_dic.keys():
+		branch_str = 'branch=' + conf_dic['branch'] + '\n'
+	else:
+		branch_str = ''
+	if 'customize_xcat_core' in conf_dic.keys():
+		core_str = 'ncustomize_xcat_core=' + conf_dic['customize_xcat_core'] + '\n'
+	else:
+		core_str = ''
+	if 'customize_xcat_dep' in conf_dic.keys():
+		dep_str = 'customize_xcat_dep=' + conf_dic['customize_xcat_dep'] + '\n'
+	else:
+		dep_str = ''
+	if 'automation_env' in conf_dic.keys():
+		env_str = 'automation_env=' + conf_dic['automation_env'] + '\n'
+	else:
+		env_str = ''
+	if 'mailing_list' in conf_dic.keys():
+		mailing_str = 'mailing_list=' + conf_dic['mailing_list'] + '\n'
+	else:
+		mailing_str = ''
+	if 'database' in conf_dic.keys():
+		database_str = 'database=' + conf_dic['database'] + '\n'
+	else:
+		database_str = ''
+	if '[customize_bundle]' in conf_dic.keys():
+		bundle_arr = conf_dic['[customize_bundle]']
+		bundle_str='[customize_bundle]\n'
+		for one in bundle_arr:
+			bundle_str = bundle_str + one + '\n'
+		bundle_str='\n'+bundle_str+'\n'
+	else:
+		bundle_str = ''
+	if 'customize_plugin' in conf_dic.keys():
+		plugin_str = 'customize_plugin=' + conf_dic['customize_plugin'] + '\n'
+	else:
+		plugin_str = ''
+	conf_str='\n%s%s%s%s%s%s%s%s%s%s%s%s' % (project_str,cluster_str,schedule_str,os_str,branch_str,core_str,dep_str,env_str,mailing_str,database_str,bundle_str,plugin_str)
+	return conf_str
+
+
 def get_Config_String_From_Xml(jenkins,projectname):
-	conf_dic = getDicFromXml(jenkins,projectname)
+	conf_dic = getDicFromXml(jenkins,projectname,True)
 	if 'project_name' in conf_dic.keys():
 		project_str ='#---------------\nproject_name=' + conf_dic['project_name'] + '\n'
 	else:
@@ -581,6 +654,12 @@ def change_Schedule(jenkins,projectname,timer_str):
 				timerTrigger.remove(spec_tmp)
 			for i in range(0,len(spec_arr)-2):
 				timerTrigger.remove(spec_arr[i])
+	elif timer_str=='now':
+		###build a job,params is optional
+		#params = {'VERSION': '1.2.3', 'PYTHON_VER': '2.7'}
+		# This will start the job in non-blocking manner
+		jenkins.build_job(projectname,params=None)
+		
 	else:
 		if spec is None:
 			spec = ET.SubElement(timerTrigger,'spec')
@@ -699,7 +778,7 @@ To list existed projects with their group:
     $program_name -m <jenkins_master> -l
  
 To modify specific attribute of all project in a group:
-    $program_name -m <jenkins_master>  -g  <group_name> [-s <disable| "H 5 * * *">]
+    $program_name -m <jenkins_master>  -g  <group_name> [-s <disable| enable| now| "H 5 * * *">]
  
 To get configuration of a project
     $program_name -m <jenkins_master>  -p  <project_name>
@@ -713,7 +792,7 @@ Options:
     -g: Specify group name in Jenkins master.
     -p: Specify project name in Jenkins master.
     -c: Specify project configuration file.
-    -s: Schedule a time when a group starts to run.  The valid values are disable or "H 8 * * *" '''
+    -s: Schedule a time when a group starts to run.  The valid values are disable, enable, now or "H 8 * * *" '''
 	print(usage_str)
 
 def print_groupList(jenkins):
@@ -722,6 +801,19 @@ def print_groupList(jenkins):
 			print('>'+group_name)
 			for job in jenkins.views[group_name].items():
 				print('  ->'+job[0])
+				conf_dic=getDicFromXml(jenkins,job[0],False)
+				for key in conf_dic:
+					if key!='project_name'and key!='[customize_bundle]':
+						print('      '+key+'='+conf_dic[key])
+					elif key=='[customize_bundle]':
+						bundle_arr=conf_dic[key]
+						str=','.join(bundle_arr)
+						bundle_str=key+'='+str
+						print('      '+bundle_str)
+					else:
+						continue;
+		else:
+			continue;
 
 def main(argv):
 	master = ''
@@ -750,17 +842,17 @@ def main(argv):
 			sys.exit()
 		elif opt in ("-m", "--master"):
 			master = arg
-			jenkins_url = 'http://'+master+':8080' #'http://10.2.4.25:8080'
-			jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
+			#jenkins_url = 'http://'+master+':8080' #'http://10.2.4.25:8080'
+			#jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
 			#jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")
-			'''
-			if master == '10.2.4.25':
-				jenkins_url = 'http://10.2.4.25:8080'
-				jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")
-			elif master == '10.4.32.1':
+			
+			if master == 'development':
+				jenkins_url = 'http://127.0.0.1:8080'#'http://10.2.4.25:8080'
+				jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")#Jenkins(jenkins_url,username="admin",password="cluster")
+			elif master == 'production':
 				jenkins_url = 'http://10.4.32.1:8080'
 				jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
-			'''
+			
 		elif opt in ("-c","--configuration"):
 			config_file_path = arg
 			create_job_by_conf(config_file_path)
@@ -773,10 +865,9 @@ def main(argv):
 		elif opt in ("-p","--project"):
 			project_name = arg
 			if is_s==False:
-				#print("run to -p\n")
 				project_name = arg
 				##To get configuration of a project
-				conf_str=get_Config_String_From_Xml(jenkins,project_name)
+				conf_str=get_Config_String_From_Xml_No_Comment(jenkins,project_name,False)
 				print(conf_str)
 				sys.exit()
 		elif (opt in ("-s", "--schedule") and is_g):
@@ -794,6 +885,9 @@ if __name__ == '__main__':
 	main(sys.argv[1:])
 	
 	
+
+
+
 
 '''
 	jenkins_url = 'http://127.0.0.1:8080' #'http://10.2.4.25:8080'
@@ -867,5 +961,4 @@ my_view.add_job(job_name, my_job)
 for job in jenkins.views[test_view_name].items():
      print(job)
 '''
-###python createJob.py -g group2 -s "H 6 * * *"/disable
-###python createJob.py -p project_name
+
