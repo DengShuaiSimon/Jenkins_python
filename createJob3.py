@@ -822,6 +822,7 @@ def main(argv):
 	is_s = False
 	is_p = False
 	is_g = False
+	is_m = False
 	try:
 		opts, args = getopt.getopt(argv,"hm:lg:s:p:c:",["help","master=","list","group=","schedule=","project=","configuration="])
 	except getopt.GetoptError:
@@ -835,6 +836,8 @@ def main(argv):
 			is_p = True
 		if opt in ("-g","--group"):
 			is_g = True
+		if opt in ("-m", "--master"):
+			is_m = True
 	for opt, arg in opts:
 		#if opt == '-h':
 		if opt in ("-h","--help"):
@@ -846,18 +849,20 @@ def main(argv):
 			#jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")
 			#jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")
 			
-			if master == 'development':
-				jenkins_url = 'http://127.0.0.1:8080'#'http://10.2.4.25:8080'
-				jenkins =  Jenkins(jenkins_url,username="dengshuai_super",password="8080")#Jenkins(jenkins_url,username="admin",password="cluster")
-			elif master == 'production':
+			if master == 'dev':
+				jenkins_url = 'http://10.2.4.25:8080'#'http://127.0.0.1:8080'#
+				jenkins =  Jenkins(jenkins_url,username="admin",password="cluster")#Jenkins(jenkins_url,username="dengshuai_super",password="8080")#
+			elif master == 'pro':
 				jenkins_url = 'http://10.4.32.1:8080'
 				jenkins = Jenkins(jenkins_url,username="admin",password="cluster")
-			
+			else:
+				logger.error("The key word is false.The vaild values are dev or pro.\n")
+				sys.exit()
 		elif opt in ("-c","--configuration"):
 			config_file_path = arg
 			create_job_by_conf(config_file_path)
 			sys.exit()
-		elif opt in ("-l","--list"):
+		elif (opt in ("-l","--list") and is_m):
 			print_groupList(jenkins)
 			sys.exit()
 		elif opt in ("-g","--group"):
@@ -878,12 +883,21 @@ def main(argv):
 			timer = arg
 			change_Schedule(jenkins,project_name,timer)
 			sys.exit()
+		else:
+			usage()
+			sys.exit(2)
 
 
 if __name__ == '__main__':
 
 	main(sys.argv[1:])
 	
+	
+
+
+###python createJob.py -g group2 -s "H 6 * * *"/disable
+###python createJob.py -p project_name
+
 	
 
 
